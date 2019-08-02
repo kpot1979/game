@@ -168,8 +168,6 @@ var Core = new function(){
 			
 			if ( p.position.x > canvas.width || p.position.y > canvas.height) {
 				p.status = 'dead';
-				ships.splice( i, 1 );
-				i --;
 				//console.log(ships);
 			}
 			///////////////////////////
@@ -182,14 +180,12 @@ var Core = new function(){
 	            p.position.x += 0;
 				p.position.y += p.velocity.y/2;
 	        }
-			// if( p.status == 'dead') {
-			// 	ships.splice( i, 1 );
-			// 	i --;
-			// } else {
-			// 	if( p.type == ORGANISM_ENEMY ) enemyCount ++;
-			// }
-			/////////////////////////
-			//console.log(enemyCount);
+
+			if (p.status == 'dead') {
+				ships.splice( i, 1 );
+				i --;
+			}
+
 			context.fill();
 		
 		}

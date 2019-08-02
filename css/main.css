@@ -1,0 +1,29 @@
+
+
+/*********************************************
+ * GLOBAL
+ *********************************************/
+
+body, html {
+	overflow: hidden;
+	font-family: Helvetica, Arial, sans-serif;
+	color: #fff;
+	font-size: 11px;
+	background: #010c12;
+}
+
+
+/*********************************************
+ * EXPERIMENT STYLES
+ *********************************************/
+
+canvas {
+	border: 6px #333333 solid;
+	cursor: crosshair;
+	z-index: 1;
+}
+#world {
+	display: block;
+	margin: 0 auto;
+	/*background: #fff;*/
+}

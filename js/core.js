@@ -19,6 +19,7 @@ var Core = new function(){
 	////////////////////////////
 	var enemyCount = 0;
 	var enemyBurnCount = {1:0,2:0,3:0,4:0,5:0};
+	var enemyBurnCountFull = 0;
 	var bulletCount = 0;
     var bullet = { x: 0, y: 0, dg: 0, dGipotenusa: 0, animation: false,};
 	var paddleX, lineX, seaBackground, skyBackgroundHeight, seaBackgroundHeight, alphaDeg, alphaDegConst, h, gipotenusa, alpha, bulletAnimationConst;
@@ -114,7 +115,7 @@ var Core = new function(){
 
     function drawText(text, x, y) {
         context.beginPath();
-        context.font = '48px serif';
+        context.font = '26px sans-serif';
         context.fillStyle = "#aaa";
         context.fillText(text, x, y);
         context.fill();
@@ -140,9 +141,9 @@ var Core = new function(){
         alpha = Math.atan(h/seaBackgroundHeight);
         alphaDeg = alpha * 180 / Math.PI;
 
-        drawText(enemyCount, 10, 40);
-        //drawText(enemyBurnCount, 10, 80);
-        drawText(bulletCount, 10, 120);
+        drawText('Врагов: '+enemyCount, 10, 40);
+        drawText(enemyBurnTextCount(), 10, 80);
+        drawText('Торпед: '+bulletCount, 10, 120);
 
         if (fire == true) {  
             bullet.animation = true;          
@@ -179,7 +180,7 @@ var Core = new function(){
 	        if (p.status == 'burn') {  	
 	            context.fillStyle = fillStyle(p.status);
 	            p.position.x += 0;
-				p.position.y += p.velocity.x/2;
+				p.position.y += p.velocity.y/2;
 	        }
 			// if( p.status == 'dead') {
 			// 	ships.splice( i, 1 );
@@ -241,6 +242,17 @@ var Core = new function(){
 
 	function enemyBurnSizeCount(size) {
 		++enemyBurnCount[size];
+		++enemyBurnCountFull;
+	}
+
+	function enemyBurnTextCount() {
+		var text = 'Всего: '+enemyBurnCountFull + '  ';
+		text += enemySize[1].name + ': ' +enemyBurnCount[1] + '   ';
+		text += enemySize[2].name + ': ' +enemyBurnCount[2] + '   ';
+		text += enemySize[3].name + ': ' +enemyBurnCount[3] + '   ';
+		text += enemySize[4].name + ': ' +enemyBurnCount[4] + '   ';
+		text += enemySize[5].name + ': ' +enemyBurnCount[5] + '   ';
+		return text;
 	}
 
 };

@@ -4,6 +4,8 @@ var Core = new function () {
     sky.src = "img/sky.svg";
     var sun = new Image();
     sun.src = "img/sun.svg";
+    var submarine = new Image();
+    submarine.src = "img/submarine.svg";
 
     var linkor = new Image();
     linkor.src = "img/battleship.svg";
@@ -154,6 +156,10 @@ var Core = new function () {
         context.drawImage(sun, canvas.width - 90, -10);
     }
 
+    function drawSubmarine() {
+        context.drawImage(submarine, canvas.width / 2 - 20, canvas.height - 50);
+    }
+
     function drawPaddle() {
         context.beginPath();
         paddleX = paddleX;
@@ -274,6 +280,7 @@ var Core = new function () {
         }
         drawSeaBackground2();
         drawLine();
+        drawSubmarine();
         requestAnimationFrame(animate);
     }
 

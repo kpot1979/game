@@ -28,7 +28,7 @@ var Core = new function () {
     var boatSmallDead = new Image();
     boatSmallDead.src = "img/boatSmallDead.svg";
 
-    var DEFAULT_WIDTH = 1800,
+    var DEFAULT_WIDTH = 800,
         DEFAULT_HEIGHT = 600,
         SHIP_SPEED_MIN = 90,
         SHIP_SPEED_MAX = 100, //max 1000

@@ -6,6 +6,8 @@ var Core = new function () {
     sun.src = "img/sun.svg";
     var submarine = new Image();
     submarine.src = "img/submarine.svg";
+    var aim = new Image();
+    aim.src = "img/aim.svg";
 
     var linkor = new Image();
     linkor.src = "img/battleship.svg";
@@ -30,8 +32,6 @@ var Core = new function () {
 
     var DEFAULT_WIDTH = 1800,
         DEFAULT_HEIGHT = 600,
-        SHIP_SPEED_MIN = 90,
-        SHIP_SPEED_MAX = 100, //max 1000
         SHIP_DELAY_MIN = 2000, //ms
         SHIP_DELAY_MAX = 3500; //ms
     var ORGANISM_ENEMY = 'enemy';
@@ -55,12 +55,10 @@ var Core = new function () {
     var relativeX = 0;
     var relX = 0;
     var fire = false;
-    var paddleHeight = 5;
-    var paddleWidth = 50;
+    var paddleHeight = 28;
+    var paddleWidth = 28;
     var ballRadius = 5;
     var skys = [];
-    var skyX = 0;
-    var skyDx = 0.1;
     var submarinePadding = 20;
     var particles = [];
 
@@ -155,7 +153,7 @@ var Core = new function () {
         context.closePath();
     }
 
-    function drawSky(x,y) {
+    function drawSky(x, y) {
         context.drawImage(sky, x, y);
     }
 
@@ -168,12 +166,13 @@ var Core = new function () {
     }
 
     function drawPaddle() {
-        context.beginPath();
-        paddleX = paddleX;
-        context.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-        context.fillStyle = "red";
-        context.fill();
-        context.closePath();
+        context.drawImage(aim, paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+        // context.beginPath();
+        // paddleX = paddleX;
+        // context.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+        // context.fillStyle = "red";
+        // context.fill();
+        // context.closePath();
     }
 
     function drawLine() {
@@ -204,17 +203,17 @@ var Core = new function () {
         context.closePath();
     }
 
-    function emitParticles( position, direction, spread, seed ) {
-        var q = seed + ( Math.random() * seed );
+    function emitParticles(position, direction, spread, seed) {
+        var q = seed + (Math.random() * seed);
 
-        while( --q >= 0 ) {
+        while (--q >= 0) {
             var p = new Point();
-            p.position.x = position.x + ( Math.sin(q) * spread );
-            p.position.y = position.y + ( Math.cos(q) * spread );
-            p.velocity = { x: direction.x + ( -1 + Math.random() * 2 ), y: direction.y + ( - 1 + Math.random() * 2 ) };
+            p.position.x = position.x + (Math.sin(q) * spread);
+            p.position.y = position.y + (Math.cos(q) * spread);
+            p.velocity = {x: direction.x + (-1 + Math.random() * 2), y: direction.y + (-1 + Math.random() * 2)};
             p.alpha = 1;
 
-            particles.push( p );
+            particles.push(p);
         }
     }
 
@@ -224,24 +223,24 @@ var Core = new function () {
         drawSeaBackground();
         drawSun();
 
-for (j = 0; j < skys.length; j++) {
-    s = skys[j];
-    s.position.x += 0.25;
-    drawSky(s.position.x, s.position.y);
-    if (s.position.x == canvas.width) {
+        for (j = 0; j < skys.length; j++) {
+            s = skys[j];
+            s.position.x += 0.25;
+            drawSky(s.position.x, s.position.y);
+            if (s.position.x == canvas.width) {
                 skys.splice(j, 1);
                 j--;
-    }
-}
-if (skys.length < 1) {
-    newSky = giveSky(new Sky());
-    //newSky.position.x = canvas.width;
-    skys.push(newSky);
-} else if (skys.length > 0 && skys.length < 2) {
-    newSky = giveSky(new Sky());
-    newSky.position.x = canvas.width - ((skys.length + 1) * skyW);
-    skys.push(newSky);
-}
+            }
+        }
+        if (skys.length < 1) {
+            newSky = giveSky(new Sky());
+            //newSky.position.x = canvas.width;
+            skys.push(newSky);
+        } else if (skys.length > 0 && skys.length < 2) {
+            newSky = giveSky(new Sky());
+            newSky.position.x = canvas.width - ((skys.length + 1) * skyW);
+            skys.push(newSky);
+        }
 
 
         h = (canvas.width / 2 - lineX);
@@ -284,7 +283,10 @@ if (skys.length < 1) {
                 context.fillStyle = fillStyle(p.status);
                 p.position.x += 0;
                 p.position.y += p.velocity.y / 2;
-                emitParticles( { x: p.position.x, y: skyBackgroundHeight }, { x: p.position.x * 0.02, y: p.position.y * 0.02 }, 5, 5 );
+                emitParticles({x: p.position.x, y: skyBackgroundHeight}, {
+                    x: p.position.x * 0.02,
+                    y: p.position.y * 0.02
+                }, 5, 5);
             }
 
             if (p.status == 'dead') {
@@ -307,7 +309,7 @@ if (skys.length < 1) {
             lastspawn = new Date().getTime() + delay;
         }
 ////////////////////
-        for( i = 0; i < particles.length; i++ ) {
+        for (i = 0; i < particles.length; i++) {
             p = particles[i];
 
             // Apply velocity to the particle
@@ -318,12 +320,12 @@ if (skys.length < 1) {
             p.alpha -= 0.02;
 
             // Draw the particle
-            context.fillStyle = 'rgba(255,255,255,'+Math.max(p.alpha,0)+')';
-            context.fillRect( p.position.x, p.position.y, 1, 1 );
+            context.fillStyle = 'rgba(255,255,255,' + Math.max(p.alpha, 0) + ')';
+            context.fillRect(p.position.x, p.position.y, 1, 1);
 
             // If the particle is faded out to less than zero, remove it
-            if( p.alpha <= 0 ) {
-                particles.splice( i, 1 );
+            if (p.alpha <= 0) {
+                particles.splice(i, 1);
             }
         }
 ///////////////////////////
@@ -352,8 +354,8 @@ if (skys.length < 1) {
         ship.position.x = 0;
         ship.position.y = skyBackgroundHeight;
         //ship.speed = randomInteger(SHIP_SPEED_MIN, SHIP_SPEED_MAX) / 1000;
-        ship.velocity.x = (world.width - ship.position.x) * 0.006 * ship.speed/10;
-        ship.velocity.y = (world.width - ship.position.y) * 0.006 * ship.speed/10;
+        ship.velocity.x = (world.width - ship.position.x) * 0.006 * ship.speed / 10;
+        ship.velocity.y = (world.width - ship.position.y) * 0.006 * ship.speed / 10;
         return ship;
     }
 
@@ -418,8 +420,8 @@ if (skys.length < 1) {
 
 };
 
-function Point( x, y ) {
-    this.position = { x: x, y: y };
+function Point(x, y) {
+    this.position = {x: x, y: y};
 }
 
 var enemySize = {
@@ -454,12 +456,12 @@ function randomInteger(min, max) {
 }
 
 function getRandomColor() {
-  var letters = '0123456789ABCDEF';
-  var color = '#';
-  for (var i = 0; i < 6; i++) {
-    color += letters[randomInteger(0, 15)];
-  }
-  return color;
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[randomInteger(0, 15)];
+    }
+    return color;
 }
 
 Core.init();

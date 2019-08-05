@@ -50,13 +50,13 @@ var Core = new function () {
     var enemyBurnCountFull = 0;
     var bulletCount = 0;
     var bullet = {x: 0, y: 0, dg: 0, dGipotenusa: 0, animation: false,};
-    var paddleX, lineX, seaBackground, skyBackgroundHeight, seaBackgroundHeight, alphaDeg, alphaDegConst, h, gipotenusa,
+    var aimX, lineX, seaBackground, skyBackgroundHeight, seaBackgroundHeight, alphaDeg, alphaDegConst, h, gipotenusa,
         alpha, bulletAnimationConst;
     var relativeX = 0;
     var relX = 0;
     var fire = false;
-    var paddleHeight = 28;
-    var paddleWidth = 28;
+    var aimHeight = 28;
+    var aimWidth = 28;
     var ballRadius = 5;
     var skys = [];
     var submarinePadding = 20;
@@ -71,7 +71,7 @@ var Core = new function () {
             context = canvas.getContext('2d');
             canvas.width = DEFAULT_WIDTH;
             canvas.height = DEFAULT_HEIGHT;
-            paddleX = (canvas.width - paddleWidth) / 2;
+            aimX = (canvas.width - aimWidth) / 2;
             lineX = canvas.width / 2;
             seaBackground = 70; //%
             skyBackgroundHeight = canvas.height - (canvas.height * seaBackground / 100); //%
@@ -93,7 +93,7 @@ var Core = new function () {
     function mouseMoveHandler(event) {
         relativeX = event.clientX - canvas.offsetLeft;
         if (relativeX > 0 && relativeX < canvas.width) {
-            paddleX = relativeX - paddleWidth / 2;
+            aimX = relativeX - aimWidth / 2;
         }
         if (relativeX < 0) {
             relX = 0;
@@ -165,14 +165,8 @@ var Core = new function () {
         context.drawImage(submarine, canvas.width / 2 - submarinePadding, canvas.height - 50);
     }
 
-    function drawPaddle() {
-        context.drawImage(aim, paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-        // context.beginPath();
-        // paddleX = paddleX;
-        // context.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-        // context.fillStyle = "red";
-        // context.fill();
-        // context.closePath();
+    function drawAim() {
+        context.drawImage(aim, aimX, skyBackgroundHeight - aimHeight / 2 - 3, aimWidth, aimHeight);
     }
 
     function drawLine() {
@@ -283,10 +277,10 @@ var Core = new function () {
                 context.fillStyle = fillStyle(p.status);
                 p.position.x += 0;
                 p.position.y += p.velocity.y / 2;
-                emitParticles({x: p.position.x, y: skyBackgroundHeight}, {
-                    x: p.position.x * 0.02,
-                    y: p.position.y * 0.02
-                }, 5, 5);
+                emitParticles({x: p.position.x, y: p.position.y}, {
+                    x: p.position.x * 0.01,
+                    y: p.position.y * 0.01
+                }, 1, 5);
             }
 
             if (p.status == 'dead') {
@@ -344,8 +338,8 @@ var Core = new function () {
         drawText(enemyBurnTextCount()[4], 10, canvas.height - 80, 12);
         drawText(enemyBurnTextCount()[5], 10, canvas.height - 60, 12);
         drawText('Использовано торпед: ' + bulletCount, 10, canvas.height - 30, 18);
-        drawPaddle();
-        drawLine();
+        drawAim();
+        //drawLine();
         drawSubmarine();
         requestAnimationFrame(animate);
     }

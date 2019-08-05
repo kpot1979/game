@@ -28,12 +28,12 @@ var Core = new function () {
     var boatSmallDead = new Image();
     boatSmallDead.src = "img/boatSmallDead.svg";
 
-    var DEFAULT_WIDTH = 800,
+    var DEFAULT_WIDTH = 1800,
         DEFAULT_HEIGHT = 600,
         SHIP_SPEED_MIN = 90,
         SHIP_SPEED_MAX = 100, //max 1000
         SHIP_DELAY_MIN = 2000, //ms
-        SHIP_DELAY_MAX = 2500; //ms
+        SHIP_DELAY_MAX = 3500; //ms
     var ORGANISM_ENEMY = 'enemy';
     var world = {
         width: DEFAULT_WIDTH,
@@ -57,9 +57,15 @@ var Core = new function () {
     var fire = false;
     var paddleHeight = 5;
     var paddleWidth = 50;
-    var ballRadius = 10;
+    var ballRadius = 5;
+    var skys = [];
     var skyX = 0;
     var skyDx = 0.1;
+    var submarinePadding = 20;
+    var particles = [];
+
+    var newSky;
+    var skyW = 1765;
 
     this.init = function () {
         canvas = document.getElementById('world');
@@ -74,8 +80,9 @@ var Core = new function () {
             seaBackgroundHeight = canvas.height - skyBackgroundHeight;
             bullet = {
                 x: canvas.width / 2,
-                y: canvas.height,
-                dg: 15,
+                y: canvas.height - submarinePadding,
+                dg: 10,
+                deflection: 0,
                 dGipotenusa: 0,
                 animation: false
             };
@@ -148,8 +155,8 @@ var Core = new function () {
         context.closePath();
     }
 
-    function drawSky() {
-        context.drawImage(sky, skyX, -3);
+    function drawSky(x,y) {
+        context.drawImage(sky, x, y);
     }
 
     function drawSun() {
@@ -157,7 +164,7 @@ var Core = new function () {
     }
 
     function drawSubmarine() {
-        context.drawImage(submarine, canvas.width / 2 - 20, canvas.height - 50);
+        context.drawImage(submarine, canvas.width / 2 - submarinePadding, canvas.height - 50);
     }
 
     function drawPaddle() {
@@ -171,7 +178,7 @@ var Core = new function () {
 
     function drawLine() {
         context.beginPath();
-        context.moveTo(canvas.width / 2, canvas.height);
+        context.moveTo(canvas.width / 2, canvas.height - submarinePadding);
         var x = lineX;
         context.lineTo(x, skyBackgroundHeight);
         context.lineWidth = 1;
@@ -180,10 +187,10 @@ var Core = new function () {
         context.stroke();
     }
 
-    function drawText(text, x, y) {
+    function drawText(text, x, y, size) {
         context.beginPath();
-        context.font = '26px sans-serif';
-        context.fillStyle = "#aaa";
+        context.font = size + 'px sans-serif';
+        context.fillStyle = "#fff";
         context.fillText(text, x, y);
         context.fill();
         context.closePath();
@@ -192,9 +199,23 @@ var Core = new function () {
     function drawBullet(x, y) {
         context.beginPath();
         context.arc(x, y, ballRadius, 0, Math.PI * 2);
-        context.fillStyle = "#0095DD";
+        context.fillStyle = "#000";
         context.fill();
         context.closePath();
+    }
+
+    function emitParticles( position, direction, spread, seed ) {
+        var q = seed + ( Math.random() * seed );
+
+        while( --q >= 0 ) {
+            var p = new Point();
+            p.position.x = position.x + ( Math.sin(q) * spread );
+            p.position.y = position.y + ( Math.cos(q) * spread );
+            p.velocity = { x: direction.x + ( -1 + Math.random() * 2 ), y: direction.y + ( - 1 + Math.random() * 2 ) };
+            p.alpha = 1;
+
+            particles.push( p );
+        }
     }
 
     function animate() {
@@ -202,26 +223,39 @@ var Core = new function () {
         drawSkyBackground();
         drawSeaBackground();
         drawSun();
-        drawSky();
-        drawPaddle();
 
-        skyX += skyDx;
+for (j = 0; j < skys.length; j++) {
+    s = skys[j];
+    s.position.x += 0.25;
+    drawSky(s.position.x, s.position.y);
+    if (s.position.x == canvas.width) {
+                skys.splice(j, 1);
+                j--;
+    }
+}
+if (skys.length < 1) {
+    newSky = giveSky(new Sky());
+    //newSky.position.x = canvas.width;
+    skys.push(newSky);
+} else if (skys.length > 0 && skys.length < 2) {
+    newSky = giveSky(new Sky());
+    newSky.position.x = canvas.width - ((skys.length + 1) * skyW);
+    skys.push(newSky);
+}
+
 
         h = (canvas.width / 2 - lineX);
-        gipotenusa = Math.sqrt(Math.pow(h, 2) + Math.pow(seaBackgroundHeight, 2));
-        alpha = Math.atan(h / seaBackgroundHeight);
+        gipotenusa = Math.sqrt(Math.pow(h, 2) + Math.pow(seaBackgroundHeight - submarinePadding, 2));
+        alpha = Math.atan(h / (seaBackgroundHeight - submarinePadding));
         alphaDeg = alpha * 180 / Math.PI;
-
-        drawText('Врагов: ' + enemyCount, 10, 40);
-        drawText(enemyBurnTextCount(), 10, 80);
-        drawText('Торпед: ' + bulletCount, 10, 120);
 
         if (fire == true) {
             bullet.animation = true;
             drawBullet(bullet.x, bullet.y);
+            drawSky(s.position.x, s.position.y);
             bullet.dGipotenusa += bullet.dg;
             bullet.x = canvas.width / 2 - (bullet.dGipotenusa * Math.sin(alphaDegConst));
-            bullet.y = canvas.height - (bullet.dGipotenusa * Math.cos(alphaDegConst));
+            bullet.y = (canvas.height - submarinePadding) - (bullet.dGipotenusa * Math.cos(alphaDegConst));
         }
 
         // Go through each enemy and draw it + update its properties
@@ -242,7 +276,7 @@ var Core = new function () {
                 //console.log(ships);
             }
             ///////////////////////////
-            if (p.status == 'live' && bullet.x > p.position.x - 5 && bullet.x < p.position.x + p.width + 5 && bullet.y < skyBackgroundHeight + p.height) {
+            if (p.status == 'live' && bullet.x > p.position.x - bullet.deflection && bullet.x < p.position.x + p.width + bullet.deflection && bullet.y < skyBackgroundHeight + p.height) {
                 p.status = 'burn';
                 enemyBurnSizeCount(p.size);
             }
@@ -250,6 +284,7 @@ var Core = new function () {
                 context.fillStyle = fillStyle(p.status);
                 p.position.x += 0;
                 p.position.y += p.velocity.y / 2;
+                emitParticles( { x: p.position.x, y: skyBackgroundHeight }, { x: p.position.x * 0.02, y: p.position.y * 0.02 }, 5, 5 );
             }
 
             if (p.status == 'dead') {
@@ -271,7 +306,27 @@ var Core = new function () {
             //console.log(delay);
             lastspawn = new Date().getTime() + delay;
         }
+////////////////////
+        for( i = 0; i < particles.length; i++ ) {
+            p = particles[i];
 
+            // Apply velocity to the particle
+            p.position.x += p.velocity.x;
+            p.position.y += p.velocity.y;
+
+            // Fade out
+            p.alpha -= 0.02;
+
+            // Draw the particle
+            context.fillStyle = 'rgba(255,255,255,'+Math.max(p.alpha,0)+')';
+            context.fillRect( p.position.x, p.position.y, 1, 1 );
+
+            // If the particle is faded out to less than zero, remove it
+            if( p.alpha <= 0 ) {
+                particles.splice( i, 1 );
+            }
+        }
+///////////////////////////
         if (bullet.y < skyBackgroundHeight + ballRadius) {
             bullet.x = canvas.width / 2;
             bullet.y = canvas.height;
@@ -279,6 +334,15 @@ var Core = new function () {
             bullet.animation = false;
         }
         drawSeaBackground2();
+        drawText('Всего врагов: ' + enemyCount, 10, canvas.height - 190, 18);
+        drawText(enemyBurnTextCount()[0], 10, canvas.height - 160, 18);
+        drawText(enemyBurnTextCount()[1], 10, canvas.height - 140, 12);
+        drawText(enemyBurnTextCount()[2], 10, canvas.height - 120, 12);
+        drawText(enemyBurnTextCount()[3], 10, canvas.height - 100, 12);
+        drawText(enemyBurnTextCount()[4], 10, canvas.height - 80, 12);
+        drawText(enemyBurnTextCount()[5], 10, canvas.height - 60, 12);
+        drawText('Использовано торпед: ' + bulletCount, 10, canvas.height - 30, 18);
+        drawPaddle();
         drawLine();
         drawSubmarine();
         requestAnimationFrame(animate);
@@ -287,10 +351,17 @@ var Core = new function () {
     function giveLife(ship) {
         ship.position.x = 0;
         ship.position.y = skyBackgroundHeight;
-        ship.speed = randomInteger(SHIP_SPEED_MIN, SHIP_SPEED_MAX) / 1000;
-        ship.velocity.x = (world.width - ship.position.x) * 0.006 * ship.speed;
-        ship.velocity.y = (world.width - ship.position.y) * 0.006 * ship.speed;
+        //ship.speed = randomInteger(SHIP_SPEED_MIN, SHIP_SPEED_MAX) / 1000;
+        ship.velocity.x = (world.width - ship.position.x) * 0.006 * ship.speed/10;
+        ship.velocity.y = (world.width - ship.position.y) * 0.006 * ship.speed/10;
         return ship;
+    }
+
+    function giveSky(sky) {
+        sky.position.x = 0;
+        sky.position.y = -5;
+        sky.velocity.x = 0.1;
+        return sky;
     }
 
     function fillStyle(status) {
@@ -315,12 +386,13 @@ var Core = new function () {
     }
 
     function enemyBurnTextCount() {
-        var text = 'Всего: ' + enemyBurnCountFull + '  ';
-        text += enemySize[1].name + ': ' + enemyBurnCount[1] + '   ';
-        text += enemySize[2].name + ': ' + enemyBurnCount[2] + '   ';
-        text += enemySize[3].name + ': ' + enemyBurnCount[3] + '   ';
-        text += enemySize[4].name + ': ' + enemyBurnCount[4] + '   ';
-        text += enemySize[5].name + ': ' + enemyBurnCount[5] + '   ';
+        var text = [];
+        text.push('Потоплено: ' + enemyBurnCountFull);
+        text.push(enemySize[1].name + ': ' + enemyBurnCount[1]);
+        text.push(enemySize[2].name + ': ' + enemyBurnCount[2]);
+        text.push(enemySize[3].name + ': ' + enemyBurnCount[3]);
+        text.push(enemySize[4].name + ': ' + enemyBurnCount[4]);
+        text.push(enemySize[5].name + ': ' + enemyBurnCount[5]);
         return text;
     }
 
@@ -346,12 +418,16 @@ var Core = new function () {
 
 };
 
+function Point( x, y ) {
+    this.position = { x: x, y: y };
+}
+
 var enemySize = {
-    1: {width: 30, height: 10, name: 'Лодка', draft: 8, id: 'boatSmall', img: 'boatSmall.svg'}, //8
-    2: {width: 50, height: 11, name: 'Катер', draft: 13, id: 'boat', img: 'boat.svg'}, //13
-    3: {width: 60, height: 12, name: 'Крейсер', draft: 19, id: 'cruiser', img: 'cruiser.svg'}, //19
-    4: {width: 70, height: 13, name: 'Линкор', draft: 20, id: 'battleship', img: 'battleship.svg'}, //20
-    5: {width: 80, height: 15, name: 'Баржа', draft: 14, id: 'barge', img: 'barge.svg'}, //14
+    1: {width: 30, height: 10, name: 'Лодка', draft: 8, id: 'boatSmall', img: 'boatSmall.svg', speed: 1}, //8
+    2: {width: 50, height: 11, name: 'Катер', draft: 13, id: 'boat', img: 'boat.svg', speed: 0.95}, //13
+    3: {width: 60, height: 12, name: 'Крейсер', draft: 19, id: 'cruiser', img: 'cruiser.svg', speed: 0.85}, //19
+    4: {width: 70, height: 13, name: 'Линкор', draft: 20, id: 'battleship', img: 'battleship.svg', speed: 0.9}, //20
+    5: {width: 80, height: 15, name: 'Баржа', draft: 14, id: 'barge', img: 'barge.svg', speed: 0.7}, //14
 }
 
 function Enemy() {
@@ -360,16 +436,30 @@ function Enemy() {
     this.size = randomInteger(1, 5);
     this.width = enemySize[this.size].width;
     this.height = enemySize[this.size].height;
-    this.speed = 1;
+    this.speed = enemySize[this.size].speed;
     this.type = 'enemy';
     this.status = 'live'; //live,burn,dead
     this.name = enemySize[this.size].name;
     this.draft = enemySize[this.size].draft;
 }
 
+function Sky() {
+    this.position = {x: 0, y: 0};
+    this.velocity = {x: 0, y: 0};
+}
+
 function randomInteger(min, max) {
     var rand = Math.floor(Math.random() * (max - min + 1)) + min;
     return rand;
+}
+
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[randomInteger(0, 15)];
+  }
+  return color;
 }
 
 Core.init();

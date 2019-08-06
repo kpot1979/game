@@ -199,12 +199,11 @@ var Core = new function () {
 
     function emitParticles(position, direction, spread, seed) {
         var q = seed + (Math.random() * seed);
-
         while (--q >= 0) {
             var p = new Point();
             p.position.x = position.x + (Math.sin(q) * spread);
             p.position.y = position.y + (Math.cos(q) * spread);
-            p.velocity = {x: direction.x + (-1 + Math.random() * 2), y: direction.y + (-1 + Math.random() * 2)};
+            p.velocity = {x: direction.x + (-2 + Math.random() * 2), y: direction.y + (-1 + Math.random() * 2)};
             p.alpha = 1;
 
             particles.push(p);
@@ -228,7 +227,6 @@ var Core = new function () {
         }
         if (skys.length < 1) {
             newSky = giveSky(new Sky());
-            //newSky.position.x = canvas.width;
             skys.push(newSky);
         } else if (skys.length > 0 && skys.length < 2) {
             newSky = giveSky(new Sky());
@@ -277,10 +275,10 @@ var Core = new function () {
                 context.fillStyle = fillStyle(p.status);
                 p.position.x += 0;
                 p.position.y += p.velocity.y / 2;
-                emitParticles({x: p.position.x, y: p.position.y}, {
-                    x: p.position.x * 0.01,
-                    y: p.position.y * 0.01
-                }, 1, 5);
+                var seeds = p.size - (p.size * (p.position.y - skyBackgroundHeight) / seaBackgroundHeight * 2);
+                if (seeds > 0) {
+                    emitParticles({x: p.position.x + p.width / 10 * 4, y: p.position.y}, {x: 40 * 0.03, y: -40 * 0.01}, 2, seeds);
+                }
             }
 
             if (p.status == 'dead') {

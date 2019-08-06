@@ -424,22 +424,22 @@ var Core = new function () {
         ++hitStat[type];
         switch (type) {
         case 0:
-            score -= 100;
+            score -= 300;
             break;
         case 1:
             score += 0;
             break;
         case 2:
-            score += 500;
-            break;
-        case 3:
-            score += 750;
-            break;
-        case 4:
             score += 1000;
             break;
+        case 3:
+            score += 2000;
+            break;
+        case 4:
+            score += 3000;
+            break;
         case 5:
-            score += 1250;
+            score += 4000;
             break;
         }
     }

@@ -43,11 +43,14 @@ var Core = new function () {
     var ships = [];
     var lastspawn = 0;
     var velocity = {x: 0, y: 0};
+    var score = 0;
 
     ////////////////////////////
     var enemyCount = 0;
     var enemyBurnCount = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    var hitStat = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
     var enemyBurnCountFull = 0;
+    var enemyBurnCountFullConst;
     var bulletCount = 0;
     var bullet = {x: 0, y: 0, dg: 0, dGipotenusa: 0, animation: false,};
     var aimX, lineX, seaBackground, skyBackgroundHeight, seaBackgroundHeight, alphaDeg, alphaDegConst, h, gipotenusa,
@@ -60,7 +63,8 @@ var Core = new function () {
     var ballRadius = 5;
     var skys = [];
     var submarinePadding = 20;
-    var particles = [];
+    var bubbles = [];
+    var explosion = [];
 
     var newSky;
     var skyW = 1765;
@@ -118,6 +122,9 @@ var Core = new function () {
             bulletCount++;
             alphaDegConst = (function () {
                 return alpha;
+            })();
+            enemyBurnCountFullConst = (function () {
+                return enemyBurnCountFull;
             })();
         }
         //console.log(bulletAnimationConst);
@@ -197,7 +204,7 @@ var Core = new function () {
         context.closePath();
     }
 
-    function emitParticles(position, direction, spread, seed) {
+    function emitBubbles(position, direction, spread, seed) {
         var q = seed + (Math.random() * seed);
         while (--q >= 0) {
             var p = new Point();
@@ -205,8 +212,19 @@ var Core = new function () {
             p.position.y = position.y + (Math.cos(q) * spread);
             p.velocity = {x: direction.x + (-2 + Math.random() * 2), y: direction.y + (-1 + Math.random() * 2)};
             p.alpha = 1;
+            bubbles.push(p);
+        }
+    }
 
-            particles.push(p);
+    function emitFire(position, direction, spread, seed) {
+        var q = seed + (Math.random() * seed);
+        while (--q >= 0) {
+            var p = new Point();
+            p.position.x = position.x + (Math.sin(q) * spread);
+            p.position.y = position.y + (Math.cos(q) * spread);
+            p.velocity = {x: direction.x + (-2 + Math.random() * 2), y: direction.y + (-1 + Math.random() * 2)};
+            p.alpha = 1;
+            explosion.push(p);
         }
     }
 
@@ -216,13 +234,13 @@ var Core = new function () {
         drawSeaBackground();
         drawSun();
 
-        for (j = 0; j < skys.length; j++) {
-            s = skys[j];
+        for (i = 0; i < skys.length; i++) {
+            s = skys[i];
             s.position.x += 0.25;
             drawSky(s.position.x, s.position.y);
             if (s.position.x == canvas.width) {
-                skys.splice(j, 1);
-                j--;
+                skys.splice(i, 1);
+                i--;
             }
         }
         if (skys.length < 1) {
@@ -242,6 +260,7 @@ var Core = new function () {
 
         if (fire == true) {
             bullet.animation = true;
+            var bbb = 0;
             drawBullet(bullet.x, bullet.y);
             drawSky(s.position.x, s.position.y);
             bullet.dGipotenusa += bullet.dg;
@@ -257,27 +276,39 @@ var Core = new function () {
                 p.position.x += p.velocity.x;
                 p.position.y = skyBackgroundHeight;
             }
-            context.fillStyle = fillStyle(p.status);
             context.beginPath();
             //context.rect(p.position.x, p.position.y, p.width, p.height);
             context.drawImage(boatImg(p.size, p.status), p.position.x, p.position.y - p.draft);
 
             if (p.position.x > canvas.width || p.position.y > canvas.height) {
                 p.status = 'dead';
-                //console.log(ships);
             }
             ///////////////////////////
             if (p.status == 'live' && bullet.x > p.position.x - bullet.deflection && bullet.x < p.position.x + p.width + bullet.deflection && bullet.y < skyBackgroundHeight + p.height) {
                 p.status = 'burn';
+                p.timeDeath = new Date().getTime();
                 enemyBurnSizeCount(p.size);
+                score += p.score; 
+                ++enemyBurnCountFull;
             }
-            if (p.status == 'burn') {
-                context.fillStyle = fillStyle(p.status);
-                p.position.x += 0;
-                p.position.y += p.velocity.y / 2;
-                var seeds = p.size - (p.size * (p.position.y - skyBackgroundHeight) / seaBackgroundHeight * 2);
-                if (seeds > 0) {
-                    emitParticles({x: p.position.x + p.width / 10 * 4, y: p.position.y}, {x: 40 * 0.03, y: -40 * 0.01}, 2, seeds);
+            if (p.status == 'burn' || p.status == 'sink') {
+                if (p.status == 'burn') {
+                    emitFire({x: p.position.x + p.width / 2, y: p.position.y}, {x: 30 * 0.03, y: -30 * 0.01}, 1, p.size * 10);
+                    p.position.x += 0;
+                    p.position.y = p.position.y;
+                    p.y += p.velocity.y / 2;
+                }
+                
+                if (new Date().getTime() - p.timeDeath > 200) {
+                  p.status = 'sink';  
+                }
+                if (p.status == 'sink') {
+                    p.position.x += 0;
+                    p.position.y += p.velocity.y / 2;
+                    var seeds = p.size - (p.size * (p.position.y - skyBackgroundHeight) / seaBackgroundHeight * 2);
+                    if (seeds > 0) {
+                        emitBubbles({x: p.position.x + p.width / 10 * 4, y: p.position.y}, {x: 40 * 0.03, y: -40 * 0.01}, 2, seeds);
+                    }
                 }
             }
 
@@ -301,8 +332,8 @@ var Core = new function () {
             lastspawn = new Date().getTime() + delay;
         }
 ////////////////////
-        for (i = 0; i < particles.length; i++) {
-            p = particles[i];
+        for (i = 0; i < bubbles.length; i++) {
+            p = bubbles[i];
 
             // Apply velocity to the particle
             p.position.x += p.velocity.x;
@@ -317,16 +348,38 @@ var Core = new function () {
 
             // If the particle is faded out to less than zero, remove it
             if (p.alpha <= 0) {
-                particles.splice(i, 1);
+                bubbles.splice(i, 1);
             }
         }
 ///////////////////////////
+        for (i = 0; i < explosion.length; i++) {
+            p = explosion[i];
+
+            // Apply velocity to the particle
+            p.position.x += p.velocity.x;
+            p.position.y += p.velocity.y;
+
+            // Fade out
+            p.alpha -= 0.02;
+
+            // Draw the particle
+            context.fillStyle = getRandomColor() + Math.max(p.alpha, 0) + ')';
+            context.fillRect(p.position.x, p.position.y, 1, 1);
+
+            // If the particle is faded out to less than zero, remove it
+            if (p.alpha <= 0) {
+                explosion.splice(i, 1);
+            }
+        }
+        /////////////////////////////////////////////////////////////////////////
         if (bullet.y < skyBackgroundHeight + ballRadius) {
             bullet.x = canvas.width / 2;
             bullet.y = canvas.height;
+            hitStatCount(enemyBurnCountFull-enemyBurnCountFullConst);
             fire = false;
             bullet.animation = false;
         }
+
         drawSeaBackground2();
         drawText('Всего врагов: ' + enemyCount, 10, canvas.height - 190, 18);
         drawText(enemyBurnTextCount()[0], 10, canvas.height - 160, 18);
@@ -337,6 +390,11 @@ var Core = new function () {
         drawText(enemyBurnTextCount()[5], 10, canvas.height - 60, 12);
         drawText('Использовано торпед: ' + bulletCount, 10, canvas.height - 30, 18);
         drawAim();
+        drawText('Промахов:  ' + hitStat[0], canvas.width - 150, canvas.height - 120, 12);
+        drawText('Попаданий: ' + hitStat[1], canvas.width - 150, canvas.height - 100, 12);
+        drawText('Комбо: ' + hitStat[2], canvas.width - 150, canvas.height - 80, 12);
+        drawText('Трипл: ' + hitStat[3], canvas.width - 150, canvas.height - 60, 12);
+        drawText('Очков: ' + score, canvas.width - 150, canvas.height - 30, 18);
         //drawLine();
         drawSubmarine();
         requestAnimationFrame(animate);
@@ -358,25 +416,32 @@ var Core = new function () {
         return sky;
     }
 
-    function fillStyle(status) {
-        var fill;
-        switch (status) {
-            case 'live':
-                fill = 'green';
-                break;
-            case 'burn':
-                fill = 'rgba( 255, 0, 0, 1 )';
-                break;
-            case 'dead':
-                fill = 'black';
-                break;
-        }
-        return fill;
-    }
-
     function enemyBurnSizeCount(size) {
         ++enemyBurnCount[size];
-        ++enemyBurnCountFull;
+    }
+
+    function  hitStatCount(type) {
+        ++hitStat[type];
+        switch (type) {
+        case 0:
+            score -= 100;
+            break;
+        case 1:
+            score += 0;
+            break;
+        case 2:
+            score += 500;
+            break;
+        case 3:
+            score += 750;
+            break;
+        case 4:
+            score += 1000;
+            break;
+        case 5:
+            score += 1250;
+            break;
+        }
     }
 
     function enemyBurnTextCount() {
@@ -417,11 +482,11 @@ function Point(x, y) {
 }
 
 var enemySize = {
-    1: {width: 30, height: 10, name: 'Лодка', draft: 8, id: 'boatSmall', img: 'boatSmall.svg', speed: 1}, //8
-    2: {width: 50, height: 11, name: 'Катер', draft: 13, id: 'boat', img: 'boat.svg', speed: 0.95}, //13
-    3: {width: 60, height: 12, name: 'Крейсер', draft: 19, id: 'cruiser', img: 'cruiser.svg', speed: 0.85}, //19
-    4: {width: 70, height: 13, name: 'Линкор', draft: 20, id: 'battleship', img: 'battleship.svg', speed: 0.9}, //20
-    5: {width: 80, height: 15, name: 'Баржа', draft: 14, id: 'barge', img: 'barge.svg', speed: 0.7}, //14
+    1: {width: 30, height: 10, name: 'Лодка', draft: 8, id: 'boatSmall', img: 'boatSmall.svg', speed: 1, score: 50}, //8
+    2: {width: 50, height: 11, name: 'Катер', draft: 13, id: 'boat', img: 'boat.svg', speed: 0.95, score: 100}, //13
+    3: {width: 60, height: 12, name: 'Крейсер', draft: 19, id: 'cruiser', img: 'cruiser.svg', speed: 0.85, score: 300}, //19
+    4: {width: 70, height: 13, name: 'Линкор', draft: 20, id: 'battleship', img: 'battleship.svg', speed: 0.9, score: 500}, //20
+    5: {width: 80, height: 15, name: 'Баржа', draft: 14, id: 'barge', img: 'barge.svg', speed: 0.7, score: 200}, //14
 }
 
 function Enemy() {
@@ -432,9 +497,11 @@ function Enemy() {
     this.height = enemySize[this.size].height;
     this.speed = enemySize[this.size].speed;
     this.type = 'enemy';
-    this.status = 'live'; //live,burn,dead
+    this.status = 'live'; //live,burn,sink,dead
     this.name = enemySize[this.size].name;
     this.draft = enemySize[this.size].draft;
+    this.timeDeath = null;
+    this.score = enemySize[this.size].score;
 }
 
 function Sky() {
@@ -448,12 +515,8 @@ function randomInteger(min, max) {
 }
 
 function getRandomColor() {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-        color += letters[randomInteger(0, 15)];
-    }
-    return color;
+    color = ["rgba(255, 100, 0,","rgba(82, 0, 0,","rgba(105, 0, 0,","rgba(140, 0, 0,","rgba(185, 0, 0,","rgba(245, 0, 0,"];
+    return color[randomInteger(0, 5)];
 }
 
 Core.init();

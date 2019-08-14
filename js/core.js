@@ -125,7 +125,7 @@ var Core = new function () {
 
     function mouseClickHandler(event) {
         if (event.target == startButton) {
-            if( playing == false ) {
+            if (playing == false) {
                 playing = true;
                 life = 100;
                 ships = [];
@@ -139,7 +139,7 @@ var Core = new function () {
                 time = new Date().getTime();
             }
         } else {
-              fire = true;
+            fire = true;
             bulletAnimationConst = (function () {
                 return bullet.animation;
             })();
@@ -153,9 +153,8 @@ var Core = new function () {
                 enemyBurnCountFullConst = (function () {
                     return enemyBurnCountFull;
                 })();
-            }          
+            }
         }
-        //console.log(bulletAnimationConst);
     }
 
     function drawSkyBackground() {
@@ -270,7 +269,7 @@ var Core = new function () {
         drawSeaBackground();
         drawSun();
 
-        if( playing ) {
+        if (playing) {
 
             for (i = 0; i < skys.length; i++) {
                 s = skys[i];
@@ -315,18 +314,17 @@ var Core = new function () {
                     p.position.y = skyBackgroundHeight;
                 }
                 context.beginPath();
-                //context.rect(p.position.x, p.position.y, p.width, p.height);
                 context.drawImage(boatImg(p.size, p.status), p.position.x, p.position.y - p.draft);
 
-                if (p.position.x > canvas.width/2) {
-                    drawEnemyBullet(p.enemyBullet.x, p.enemyBullet.y); 
-                    p.enemyBullet.x = canvas.width/2; 
+                if (p.position.x > canvas.width / 2) {
+                    drawEnemyBullet(p.enemyBullet.x, p.enemyBullet.y);
+                    p.enemyBullet.x = canvas.width / 2;
                     p.enemyBullet.y += p.enemyBullet.dy;
                     if (p.enemyBullet.y > canvas.height - submarineHeight && p.enemyBullet.y < canvas.height) {
                         p.enemyBullet.y = p.enemyBullet.y;
                         enemyBulletStatus = true;
                     } else if (p.enemyBullet.y > canvas.height) {
-                        enemyBulletStatus = false; 
+                        enemyBulletStatus = false;
                     }
                 }
 
@@ -334,31 +332,37 @@ var Core = new function () {
                 if (p.position.x > canvas.width || p.position.y > canvas.height) {
                     p.status = 'dead';
                 }
-                ///////////////////////////
+
                 if (p.status == 'live' && bullet.x > p.position.x - bullet.deflection && bullet.x < p.position.x + p.width + bullet.deflection && bullet.y < skyBackgroundHeight + p.height) {
                     p.status = 'burn';
                     p.timeDeath = new Date().getTime();
                     enemyBurnSizeCount(p.size);
-                    score += p.score; 
+                    score += p.score;
                     ++enemyBurnCountFull;
                 }
                 if (p.status == 'burn' || p.status == 'sink') {
                     if (p.status == 'burn') {
-                        emitFire({x: p.position.x + p.width / 2, y: p.position.y}, {x: 30 * 0.03, y: -30 * 0.01}, 1, p.size * 10);
+                        emitFire({x: p.position.x + p.width / 2, y: p.position.y}, {
+                            x: 30 * 0.03,
+                            y: -30 * 0.01
+                        }, 1, p.size * 10);
                         p.position.x += 0;
                         p.position.y = p.position.y;
                         p.y += p.velocity.y / 2;
                     }
-                    
+
                     if (new Date().getTime() - p.timeDeath > 200) {
-                      p.status = 'sink';  
+                        p.status = 'sink';
                     }
                     if (p.status == 'sink') {
                         p.position.x += 0;
                         p.position.y += p.velocity.y / 2;
                         var seeds = p.size - (p.size * (p.position.y - skyBackgroundHeight) / seaBackgroundHeight * 2);
                         if (seeds > 0) {
-                            emitBubbles({x: p.position.x + p.width / 10 * 4, y: p.position.y}, {x: 40 * 0.03, y: -40 * 0.01}, 2, seeds);
+                            emitBubbles({x: p.position.x + p.width / 10 * 4, y: p.position.y}, {
+                                x: 40 * 0.03,
+                                y: -40 * 0.01
+                            }, 2, seeds);
                         }
                     }
                 }
@@ -372,73 +376,65 @@ var Core = new function () {
 
             }
 
-        // If there are less enemies than intended for this difficulty, add another one
-        drawSeaBackground2();
-        if (new Date().getTime() - lastspawn > 100) {
-            var newEnemy = giveLife(new Enemy());
-            //console.log(newEnemy);
-            newEnemy.enemyBullet.y = skyBackgroundHeight;
-            ships.push(newEnemy);
-            enemyCount++;
-            var delay = randomInteger(SHIP_DELAY_MIN, SHIP_DELAY_MAX);
-            //console.log(delay);
-            lastspawn = new Date().getTime() + delay;
-        }
-////////////////////
-        for (i = 0; i < bubbles.length; i++) {
-            p = bubbles[i];
 
-            // Apply velocity to the particle
-            p.position.x += p.velocity.x;
-            p.position.y += p.velocity.y;
+            drawSeaBackground2();
+            if (new Date().getTime() - lastspawn > 100) {
+                var newEnemy = giveLife(new Enemy());
+                newEnemy.enemyBullet.y = skyBackgroundHeight;
+                ships.push(newEnemy);
+                enemyCount++;
+                var delay = randomInteger(SHIP_DELAY_MIN, SHIP_DELAY_MAX);
+                lastspawn = new Date().getTime() + delay;
+            }
 
-            // Fade out
-            p.alpha -= 0.02;
+            for (i = 0; i < bubbles.length; i++) {
+                p = bubbles[i];
 
-            // Draw the particle
-            context.fillStyle = 'rgba(255,255,255,' + Math.max(p.alpha, 0) + ')';
-            context.fillRect(p.position.x, p.position.y, 1, 1);
+                p.position.x += p.velocity.x;
+                p.position.y += p.velocity.y;
 
-            // If the particle is faded out to less than zero, remove it
-            if (p.alpha <= 0) {
-                bubbles.splice(i, 1);
+                p.alpha -= 0.02;
+
+                context.fillStyle = 'rgba(255,255,255,' + Math.max(p.alpha, 0) + ')';
+                context.fillRect(p.position.x, p.position.y, 1, 1);
+
+                if (p.alpha <= 0) {
+                    bubbles.splice(i, 1);
+                }
+            }
+
+            for (i = 0; i < explosion.length; i++) {
+                p = explosion[i];
+
+                p.position.x += p.velocity.x;
+                p.position.y += p.velocity.y;
+
+                p.alpha -= 0.02;
+
+                context.fillStyle = getRandomColor() + Math.max(p.alpha, 0) + ')';
+                context.fillRect(p.position.x, p.position.y, 1, 1);
+
+                if (p.alpha <= 0) {
+                    explosion.splice(i, 1);
+                }
+            }
+
+            if (bullet.y < skyBackgroundHeight + ballRadius) {
+                bullet.x = canvas.width / 2;
+                bullet.y = canvas.height;
+                hitStatCount(enemyBurnCountFull - enemyBurnCountFullConst);
+                fire = false;
+                bullet.animation = false;
+            }
+
+            if (enemyBulletStatus == true) {
+                emitBubbles({x: canvas.width / 2, y: canvas.height - submarineHeight}, {
+                    x: 30 * 0.03,
+                    y: -30 * 0.01
+                }, 2, 2);
+                life = life - 0.5;
             }
         }
-///////////////////////////
-        for (i = 0; i < explosion.length; i++) {
-            p = explosion[i];
-
-            // Apply velocity to the particle
-            p.position.x += p.velocity.x;
-            p.position.y += p.velocity.y;
-
-            // Fade out
-            p.alpha -= 0.02;
-
-            // Draw the particle
-            context.fillStyle = getRandomColor() + Math.max(p.alpha, 0) + ')';
-            context.fillRect(p.position.x, p.position.y, 1, 1);
-
-            // If the particle is faded out to less than zero, remove it
-            if (p.alpha <= 0) {
-                explosion.splice(i, 1);
-            }
-        }
-        /////////////////////////////////////////////////////////////////////////
-        if (bullet.y < skyBackgroundHeight + ballRadius) {
-            bullet.x = canvas.width / 2;
-            bullet.y = canvas.height;
-            hitStatCount(enemyBurnCountFull-enemyBurnCountFullConst);
-            fire = false;
-            bullet.animation = false;
-        }
-
-        //drawSeaBackground2();
-        if (enemyBulletStatus == true) {
-            emitBubbles({x: canvas.width/2, y: canvas.height - submarineHeight}, {x: 30 * 0.03, y: -30 * 0.01}, 2, 2);
-            life = life - 0.5;
-        }
-    }
         if (life < 0) {
             gameOver();
             life = 0;
@@ -466,7 +462,6 @@ var Core = new function () {
     function giveLife(ship) {
         ship.position.x = 0;
         ship.position.y = skyBackgroundHeight;
-        //ship.speed = randomInteger(SHIP_SPEED_MIN, SHIP_SPEED_MAX) / 1000;
         ship.velocity.x = (world.width - ship.position.x) * 0.006 * ship.speed / 10;
         ship.velocity.y = (world.width - ship.position.y) * 0.006 * ship.speed / 10;
         return ship;
@@ -483,27 +478,27 @@ var Core = new function () {
         ++enemyBurnCount[size];
     }
 
-    function  hitStatCount(type) {
+    function hitStatCount(type) {
         ++hitStat[type];
         switch (type) {
-        case 0:
-            score -= 300;
-            break;
-        case 1:
-            score += 0;
-            break;
-        case 2:
-            score += 1000;
-            break;
-        case 3:
-            score += 2000;
-            break;
-        case 4:
-            score += 3000;
-            break;
-        case 5:
-            score += 4000;
-            break;
+            case 0:
+                score -= 300;
+                break;
+            case 1:
+                score += 0;
+                break;
+            case 2:
+                score += 1000;
+                break;
+            case 3:
+                score += 2000;
+                break;
+            case 4:
+                score += 3000;
+                break;
+            case 5:
+                score += 4000;
+                break;
         }
     }
 
@@ -540,16 +535,16 @@ var Core = new function () {
 
 };
 
-function Point(x, y) {
-    this.position = {x: x, y: y};
-}
-
 var enemySize = {
     1: {width: 30, height: 10, name: 'Лодка', draft: 8, id: 'boatSmall', img: 'boatSmall.svg', speed: 1, score: 50}, //8
     2: {width: 50, height: 11, name: 'Катер', draft: 13, id: 'boat', img: 'boat.svg', speed: 0.95, score: 100}, //13
     3: {width: 60, height: 12, name: 'Крейсер', draft: 19, id: 'cruiser', img: 'cruiser.svg', speed: 0.85, score: 300}, //19
     4: {width: 70, height: 13, name: 'Линкор', draft: 20, id: 'battleship', img: 'battleship.svg', speed: 0.9, score: 500}, //20
     5: {width: 80, height: 15, name: 'Баржа', draft: 14, id: 'barge', img: 'barge.svg', speed: 0.7, score: 200}, //14
+};
+
+function Point(x, y) {
+    this.position = {x: x, y: y};
 }
 
 function Enemy() {
@@ -579,7 +574,7 @@ function randomInteger(min, max) {
 }
 
 function getRandomColor() {
-    color = ["rgba(255, 100, 0,","rgba(82, 0, 0,","rgba(105, 0, 0,","rgba(140, 0, 0,","rgba(185, 0, 0,","rgba(245, 0, 0,"];
+    color = ["rgba(255, 100, 0,", "rgba(82, 0, 0,", "rgba(105, 0, 0,", "rgba(140, 0, 0,", "rgba(185, 0, 0,", "rgba(245, 0, 0,"];
     return color[randomInteger(0, 5)];
 }
 

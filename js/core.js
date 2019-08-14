@@ -8,7 +8,6 @@ var Core = new function () {
     submarine.src = "img/submarine.svg";
     var aim = new Image();
     aim.src = "img/aim.svg";
-
     var linkor = new Image();
     linkor.src = "img/battleship.svg";
     var linkorDead = new Image();
@@ -30,6 +29,8 @@ var Core = new function () {
     var boatSmallDead = new Image();
     boatSmallDead.src = "img/boatSmallDead.svg";
 
+    var aimX, lineX, seaBackground, skyBackgroundHeight, seaBackgroundHeight, alphaDeg, alphaDegConst, h, gipotenusa,
+        alpha, bulletAnimationConst;
     var DEFAULT_WIDTH = 1800,
         DEFAULT_HEIGHT = 600,
         SHIP_DELAY_MIN = 2000, //ms
@@ -44,11 +45,9 @@ var Core = new function () {
     var lastspawn = 0;
     var velocity = {x: 0, y: 0};
     var score = 0;
-
     var playing = false;
     var time = 0;
     var duration = 0;
-    ////////////////////////////
     var enemyCount = 0;
     var enemyBurnCount = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
     var hitStat = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
@@ -56,8 +55,6 @@ var Core = new function () {
     var enemyBurnCountFullConst;
     var bulletCount = 0;
     var bullet = {x: 0, y: 0, dg: 0, dGipotenusa: 0, animation: false,};
-    var aimX, lineX, seaBackground, skyBackgroundHeight, seaBackgroundHeight, alphaDeg, alphaDegConst, h, gipotenusa,
-        alpha, bulletAnimationConst;
     var enemyBulletStatus = false;
     var relativeX = 0;
     var relX = 0;
@@ -70,14 +67,15 @@ var Core = new function () {
     var submarineHeight = 50;
     var bubbles = [];
     var explosion = [];
-
     var newSky;
     var skyW = 1765;
-    var life = 100;
+    var health = 100;
+    var bonusScore = 4000;
 
     this.init = function () {
         canvas = document.getElementById('world');
         startButton = document.getElementById('startButton');
+        message = document.getElementById('message');
         if (canvas && canvas.getContext) {
             context = canvas.getContext('2d');
             canvas.width = DEFAULT_WIDTH;
@@ -95,6 +93,7 @@ var Core = new function () {
                 dGipotenusa: 0,
                 animation: false
             };
+            message.setAttribute("style", "margin-top:" + (canvas.height / 2 - 100) + "px;");
             document.addEventListener("mousemove", mouseMoveHandler, false);
             document.addEventListener("click", mouseClickHandler, false);
             animate();
@@ -104,6 +103,13 @@ var Core = new function () {
     function gameOver() {
         playing = false;
         duration = new Date().getTime() - time;
+        message.setAttribute("style", "display:block;margin-top:" + (canvas.height / 2 - 100) + "px;");
+        startButton.classList.add("game-over");
+        startButton.childNodes[0].nodeValue = "Игра окончена!";
+        setTimeout(function () {
+            startButton.classList.remove("game-over");
+            startButton.childNodes[0].nodeValue = "Начать игру";
+        }, 4000);
     }
 
     function mouseMoveHandler(event) {
@@ -126,8 +132,9 @@ var Core = new function () {
     function mouseClickHandler(event) {
         if (event.target == startButton) {
             if (playing == false) {
+                message.setAttribute("style", "display:none;");
                 playing = true;
-                life = 100;
+                health = 100;
                 ships = [];
                 enemyCount = 0;
                 enemyBurnCount = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
@@ -137,6 +144,7 @@ var Core = new function () {
                 bulletCount = 0;
                 enemyBulletStatus = false;
                 time = new Date().getTime();
+
             }
         } else {
             fire = true;
@@ -159,7 +167,7 @@ var Core = new function () {
 
     function drawSkyBackground() {
         context.beginPath();
-        var gradient = context.createLinearGradient(0, 0, 0, skyBackgroundHeight);
+        let gradient = context.createLinearGradient(0, 0, 0, skyBackgroundHeight);
         gradient.addColorStop(0, "#5087a5");
         gradient.addColorStop(1, "#ebf6f0");
         context.fillStyle = gradient;
@@ -169,7 +177,7 @@ var Core = new function () {
 
     function drawSeaBackground() {
         context.beginPath();
-        var gradient = context.createLinearGradient(0, skyBackgroundHeight, 0, canvas.height);
+        let gradient = context.createLinearGradient(0, skyBackgroundHeight, 0, canvas.height);
         gradient.addColorStop(0, "rgba(9,103,130,1)"); //096782
         gradient.addColorStop(1, "rgba(4,24,23,1)"); //#041817
         context.fillStyle = gradient;
@@ -179,11 +187,26 @@ var Core = new function () {
 
     function drawSeaBackground2() {
         context.beginPath();
-        var gradient = context.createLinearGradient(0, skyBackgroundHeight, 0, canvas.height);
+        let gradient = context.createLinearGradient(0, skyBackgroundHeight, 0, canvas.height);
         gradient.addColorStop(0, "rgba(9,103,130,0.2)"); //096782
         gradient.addColorStop(1, "rgba(4,24,23,1)"); //#041817
         context.fillStyle = gradient;
         context.fillRect(0, skyBackgroundHeight, canvas.width, canvas.height);
+        context.closePath();
+    }
+
+    function drawHealth(x, y, health) {
+        let widthMax = 135;
+        let height = 12;
+        let width = health * widthMax / 100;
+        let r = 255 - Math.round(health * 255 / 100);
+        let g = Math.round(health * 155 / 100);
+        let color = "rgba(" + r + ", " + g + ", 0, 1)";
+        context.beginPath();
+        context.fillStyle = "rgba(0,0,0,0.5)";
+        context.fillRect(x, y, widthMax, height);
+        context.fillStyle = color;
+        context.fillRect(x, y, width, height);
         context.closePath();
     }
 
@@ -203,16 +226,16 @@ var Core = new function () {
         context.drawImage(aim, aimX, skyBackgroundHeight - aimHeight / 2 - 3, aimWidth, aimHeight);
     }
 
-    function drawLine() {
-        context.beginPath();
-        context.moveTo(canvas.width / 2, canvas.height - submarinePadding);
-        var x = lineX;
-        context.lineTo(x, skyBackgroundHeight);
-        context.lineWidth = 1;
-        context.strokeStyle = "#043837";
-        context.closePath();
-        context.stroke();
-    }
+    // function drawLine() {
+    //     context.beginPath();
+    //     context.moveTo(canvas.width / 2, canvas.height - submarinePadding);
+    //     let x = lineX;
+    //     context.lineTo(x, skyBackgroundHeight);
+    //     context.lineWidth = 1;
+    //     context.strokeStyle = "#043837";
+    //     context.closePath();
+    //     context.stroke();
+    // }
 
     function drawText(text, x, y, size) {
         context.beginPath();
@@ -240,9 +263,9 @@ var Core = new function () {
     }
 
     function emitBubbles(position, direction, spread, seed) {
-        var q = seed + (Math.random() * seed);
+        let q = seed + (Math.random() * seed);
         while (--q >= 0) {
-            var p = new Point();
+            let p = new Point();
             p.position.x = position.x + (Math.sin(q) * spread);
             p.position.y = position.y + (Math.cos(q) * spread);
             p.velocity = {x: direction.x + (-2 + Math.random() * 2), y: direction.y + (-1 + Math.random() * 2)};
@@ -252,9 +275,9 @@ var Core = new function () {
     }
 
     function emitFire(position, direction, spread, seed) {
-        var q = seed + (Math.random() * seed);
+        let q = seed + (Math.random() * seed);
         while (--q >= 0) {
-            var p = new Point();
+            let p = new Point();
             p.position.x = position.x + (Math.sin(q) * spread);
             p.position.y = position.y + (Math.cos(q) * spread);
             p.velocity = {x: direction.x + (-2 + Math.random() * 2), y: direction.y + (-1 + Math.random() * 2)};
@@ -297,7 +320,6 @@ var Core = new function () {
 
             if (fire == true) {
                 bullet.animation = true;
-                var bbb = 0;
                 drawBullet(bullet.x, bullet.y);
                 drawSky(s.position.x, s.position.y);
                 bullet.dGipotenusa += bullet.dg;
@@ -331,6 +353,9 @@ var Core = new function () {
 
                 if (p.position.x > canvas.width || p.position.y > canvas.height) {
                     p.status = 'dead';
+                    if (p.position.x > canvas.width) {
+                        score -= 300;
+                    }
                 }
 
                 if (p.status == 'live' && bullet.x > p.position.x - bullet.deflection && bullet.x < p.position.x + p.width + bullet.deflection && bullet.y < skyBackgroundHeight + p.height) {
@@ -432,12 +457,19 @@ var Core = new function () {
                     x: 30 * 0.03,
                     y: -30 * 0.01
                 }, 2, 2);
-                life = life - 0.5;
+                health = health - 0.5;
             }
         }
-        if (life < 0) {
-            gameOver();
-            life = 0;
+        if (health < 0) {
+            setTimeout(function () {
+                gameOver();
+            }, 800);
+            health = 0;
+        }
+        if (health < 100 && score > bonusScore) {
+            score = score - bonusScore;
+            health = health + 10;
+            if (health > 100) health = 100;
         }
         drawText('Всего врагов: ' + enemyCount, 10, canvas.height - 190, 18);
         drawText(enemyBurnTextCount()[0], 10, canvas.height - 160, 18);
@@ -448,7 +480,8 @@ var Core = new function () {
         drawText(enemyBurnTextCount()[5], 10, canvas.height - 60, 12);
         drawText('Использовано торпед: ' + bulletCount, 10, canvas.height - 30, 18);
         drawAim();
-        drawText('Жизнь: ' + life + '%', canvas.width - 150, canvas.height - 150, 18);
+        drawHealth(canvas.width - 150, canvas.height - 180, health);
+        drawText('Здоровье: ' + Math.round(health) + '%', canvas.width - 150, canvas.height - 150, 18);
         drawText('Промахов:  ' + hitStat[0], canvas.width - 150, canvas.height - 120, 12);
         drawText('Попаданий: ' + hitStat[1], canvas.width - 150, canvas.height - 100, 12);
         drawText('Комбо: ' + hitStat[2], canvas.width - 150, canvas.height - 80, 12);
@@ -539,7 +572,16 @@ var enemySize = {
     1: {width: 30, height: 10, name: 'Лодка', draft: 8, id: 'boatSmall', img: 'boatSmall.svg', speed: 1, score: 50}, //8
     2: {width: 50, height: 11, name: 'Катер', draft: 13, id: 'boat', img: 'boat.svg', speed: 0.95, score: 100}, //13
     3: {width: 60, height: 12, name: 'Крейсер', draft: 19, id: 'cruiser', img: 'cruiser.svg', speed: 0.85, score: 300}, //19
-    4: {width: 70, height: 13, name: 'Линкор', draft: 20, id: 'battleship', img: 'battleship.svg', speed: 0.9, score: 500}, //20
+    4: {
+        width: 70,
+        height: 13,
+        name: 'Линкор',
+        draft: 20,
+        id: 'battleship',
+        img: 'battleship.svg',
+        speed: 0.9,
+        score: 500
+    }, //20
     5: {width: 80, height: 15, name: 'Баржа', draft: 14, id: 'barge', img: 'barge.svg', speed: 0.7, score: 200}, //14
 };
 

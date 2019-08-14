@@ -1,29 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-		<meta charset="utf-8">
+<head>
+    <meta charset="utf-8">
 
-		<meta name="description" content="" />
-		<meta name="author" content="SA" />
+    <meta name="description" content=""/>
+    <meta name="author" content="SA"/>
 
-		<meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-status-bar-style" content="black">
-		<meta name="viewport" content="width = 450">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="viewport" content="width = 450">
 
-        <title>Sea battle</title>
+    <title>Submarine hunter</title>
 
-		<link href="css/reset.css" rel="stylesheet" media="screen" />
-		<link href="css/main.css" rel="stylesheet" media="screen" />
+    <link href="css/reset.css" rel="stylesheet" media="screen"/>
+    <link href="css/main.css" rel="stylesheet" media="screen"/>
 
-    </head>
-    <body>
-<button id="startButton">Start</button>
-		<canvas id="world">
-		</canvas>
-		<script src="js/core.js"></script>
+</head>
+<body>
+<div class="world-wrapper">
+    <div class="message-block">
+        <div id="message" class="message">
+            <button id="startButton" class="btn start-button">Начать игру</button>
+        </div>
+    </div>
+    <canvas id="world">
+    </canvas>
+</div>
+<script src="js/core.js"></script>
 
 
-    </body>
+</body>
 </html>
